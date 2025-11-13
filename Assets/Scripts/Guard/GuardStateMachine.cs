@@ -18,13 +18,9 @@ public class GuardStateMachine : MonoBehaviour
     public event Action OnSwithToPatrol;
     public event Action OnSwithToChase;
 
-    private GuardContainer guardContainer;
-
     private NavMeshAgent myAgent;
 
     private Transform player;
-
-    private Color lightColor;
 
     [Tooltip("The speed at which the guard moves while patrolling.")]
     [SerializeField] private float patrolSpeed = 3f;
@@ -33,12 +29,9 @@ public class GuardStateMachine : MonoBehaviour
     
     private void Awake()
     {
-        guardContainer = FindFirstObjectByType<GuardContainer>();
-
         myAgent = GetComponent<NavMeshAgent>();
 
-        //TODO: replace finding player logic
-        // player = FindObjectOfType<PlayerController>().transform;
+        player = FindFirstObjectByType<PlayerController>().transform;
     }
 
     private void Start()
