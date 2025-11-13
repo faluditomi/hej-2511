@@ -6,7 +6,9 @@ public class PlayerController : MonoBehaviour
 
     private Vector2 moveVector = Vector2.zero;
 
-    [SerializeField] private float movementSpeed = 10f;
+    [SerializeField] private float moveSpeed = 8f, sprintSpeed = 15f;
+
+    private bool isSprinting;
 
     private void Awake()
     {
@@ -21,15 +23,25 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public void SetMoveVector(Vector2 moveVector)
-    {
-        this.moveVector = moveVector; 
-    }
-
-    public void Move()
+    private void Move()
     {
         Vector3 move = transform.forward * moveVector.y + transform.right * moveVector.x;
-        move = move * movementSpeed * Time.deltaTime;
+        float currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
+        move = move * currentSpeed * Time.deltaTime;
         _characterController.Move(move);
     }
+
+    #region Setters & Getters
+
+    public void SetMoveVector(Vector2 moveVector)
+    {
+        this.moveVector = moveVector;
+    }
+    
+    public void SetSprint(bool isSprinting)
+    {
+        this.isSprinting = isSprinting;
+    }
+
+    #endregion
 }
