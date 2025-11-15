@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[RequireComponent(typeof(PlayerController), typeof(CameraController))]
 public class InputHandler : MonoBehaviour
 {
     private PlayerController playerController;
@@ -26,6 +27,9 @@ public class InputHandler : MonoBehaviour
 
         _inputActions.Player.Sprint.performed += Sprint;
         _inputActions.Player.Sprint.canceled += Sprint;
+
+        _inputActions.Player.Jump.performed += Jump;
+        _inputActions.Player.Jump.canceled += Jump;
     }
 
     private void OnDisable()
@@ -40,28 +44,30 @@ public class InputHandler : MonoBehaviour
 
         _inputActions.Player.Sprint.performed -= Sprint;
         _inputActions.Player.Sprint.canceled -= Sprint;
+
+        _inputActions.Player.Jump.performed -= Jump;
+        _inputActions.Player.Jump.canceled -= Jump;
     }
 
     private void Move(InputAction.CallbackContext input)
     {
-        if(playerController == null) return;
-
         Vector2 moveVector = input.ReadValue<Vector2>();
         playerController.SetMoveVector(moveVector);
     }
 
     private void Look(InputAction.CallbackContext input)
     {
-        if(cameraController == null) return;
-
         Vector2 lookVector = input.ReadValue<Vector2>();
         cameraController.Look(lookVector);
     }
 
     private void Sprint(InputAction.CallbackContext input)
     {
-        if(playerController == null) return;
-
         playerController.SetSprint(input.performed);
+    }
+
+    private void Jump(InputAction.CallbackContext input)
+    {
+        playerController.Jump(input.performed);
     }
 }
