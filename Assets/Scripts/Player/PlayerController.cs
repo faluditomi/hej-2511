@@ -1,11 +1,23 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    private enum DelayTillGroundedType
+    {
+        MOVE_VECTOR,
+        SPRINT_CROUCH
+    }
+
+    private Coroutine
+        delayMoveVectorTillGroundedCoroutine,
+        delaySprintOrCrouchTillGroundedCoroutine;
+
     private CharacterController _characterController;
 
     /// <summary>
-    /// The input values from the player
+    /// The inputs from the player
     /// </summary>
     private Vector3 moveVector = Vector3.zero;
 
@@ -20,15 +32,17 @@ public class PlayerController : MonoBehaviour
         maxJumpHeight = 6.5f,
         gravityValue = 9.81f;
 
+    /// <summary>
+    /// Controls whether the player has access to this mechanic.
+    /// </summary>
     [SerializeField]
     private bool
         isSprintActive = true,
         isJumpActive = true;
 
     /// <summary>
-    /// Simple jump ->      Press once, jump of a maxJumpHeight.
-    /// Non-simple jump ->  Pressing activates jump, letting go stops the player from elevating.
-    ///                     If the player doesn't let go, the jump goes to maxJumpHeight.
+    /// Simple jump = [Press once, jump of a maxJumpHeight.] Non-simple jump = [Pressing activates jump, 
+    /// letting go stops the player from elevating. If the player doesn't let go, the jump goes to maxJumpHeight.]
     /// </summary>
     [SerializeField] private bool isJumpSimple = true;
 
@@ -80,9 +94,62 @@ public class PlayerController : MonoBehaviour
         float currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
         Vector3 move = ((moveVector * currentSpeed) + playerVelocity) * Time.deltaTime;
         _characterController.Move(move);
+
         if(_characterController.isGrounded && playerVelocity.y < 0)
         {
             playerVelocity.y = 0f;
+        }
+    }
+
+    /// <summary>
+    /// Used to delay behaviours like sprint switching, crouching, etc. until the player reaches the ground.
+    /// </summary>
+    /// <param name="callback">The code that will be run once the player reaches the ground.</param>
+    private void DelayTillGrounded(Action callback, DelayTillGroundedType type)
+    {
+        switch(type)
+        {
+            case DelayTillGroundedType.MOVE_VECTOR:
+                if(delayMoveVectorTillGroundedCoroutine != null)
+                {
+                    StopCoroutine(delayMoveVectorTillGroundedCoroutine);
+                }
+
+                delayMoveVectorTillGroundedCoroutine = StartCoroutine(DelayTillGroundedBehaviour(callback, type));
+                break;
+
+            case DelayTillGroundedType.SPRINT_CROUCH:
+                if(delayMoveVectorTillGroundedCoroutine != null)
+                {
+                    StopCoroutine(delayMoveVectorTillGroundedCoroutine);
+                }
+
+                delaySprintOrCrouchTillGroundedCoroutine = StartCoroutine(DelayTillGroundedBehaviour(callback, type));
+                break;
+
+            default:
+                return;
+        }
+    }
+
+    #endregion
+
+    #region Coroutines
+
+    private IEnumerator DelayTillGroundedBehaviour(Action callback, DelayTillGroundedType type)
+    {
+        yield return new WaitUntil(() => _characterController.isGrounded);
+        callback?.Invoke();
+        
+        switch(type)
+        {
+            case DelayTillGroundedType.MOVE_VECTOR:
+                delayMoveVectorTillGroundedCoroutine = null;
+                break;
+
+            case DelayTillGroundedType.SPRINT_CROUCH:
+                delaySprintOrCrouchTillGroundedCoroutine = null;
+                break;
         }
     }
 
@@ -92,7 +159,14 @@ public class PlayerController : MonoBehaviour
 
     public void SetMoveVector(Vector2 moveVector)
     {
-        this.moveVector = transform.forward * moveVector.y + transform.right * moveVector.x;
+        if(_characterController.isGrounded)
+        {
+            this.moveVector = transform.forward * moveVector.y + transform.right * moveVector.x;
+        }
+        else
+        {
+            DelayTillGrounded(() => this.moveVector = transform.forward * moveVector.y + transform.right * moveVector.x, DelayTillGroundedType.MOVE_VECTOR);
+        }
     }
     
     public void SetSprint(bool isSprinting)
@@ -102,8 +176,15 @@ public class PlayerController : MonoBehaviour
             this.isSprinting = false;
             return;
         }
-        
-        this.isSprinting = isSprinting;
+
+        if(_characterController.isGrounded)
+        {
+            this.isSprinting = isSprinting;
+        }
+        else
+        {
+            DelayTillGrounded(() => this.isSprinting = isSprinting, DelayTillGroundedType.SPRINT_CROUCH);
+        }
     }
 
     #endregion
