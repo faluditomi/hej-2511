@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using UnityEditor.Splines;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -12,9 +13,13 @@ public class PlayerController : MonoBehaviour
 
     private Coroutine
         delayMoveVectorTillGroundedCoroutine,
-        delaySprintOrCrouchTillGroundedCoroutine;
+        delaySprintOrCrouchTillGroundedCoroutine,
+        crouchCoroutine;
 
     private CharacterController _characterController;
+    
+    [Tooltip("Layers that block the player from standing up")]
+    [SerializeField] private LayerMask standBlockLayers;
 
     /// <summary>
     /// The inputs from the player
@@ -26,11 +31,16 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private Vector3 playerVelocity = Vector3.zero;
 
-    [SerializeField] private float
+    private Vector3 originalLocalScale;
+
+    [SerializeField]
+    private float
         moveSpeed = 8f,
         sprintSpeed = 15f,
         maxJumpHeight = 6.5f,
-        gravityValue = 9.81f;
+        gravityValue = 9.81f,
+        crouchHeightMultiplier = 0.4f,
+        crouchTransitionDuration = 0.2f;
 
     /// <summary>
     /// Controls whether the player has access to this mechanic.
@@ -46,13 +56,20 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     [SerializeField] private bool isJumpSimple = true;
 
-    private bool isSprinting;
+    private bool
+        isSprinting,
+        isCrouching;
 
     #region MonoBehaviour Methods
 
     private void Awake()
     {
         _characterController = GetComponent<CharacterController>();
+    }
+
+    private void Start()
+    {
+        originalLocalScale = transform.localScale;
     }
 
     private void FixedUpdate()
@@ -88,6 +105,20 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void Crouch(bool isStarted)
+    {
+        // If already crouched or a crouch transition is running, cancel it and start a new one.
+        if(crouchCoroutine != null)
+        {
+            StopCoroutine(crouchCoroutine);
+            crouchCoroutine = null;
+        }
+
+        Vector3 targetScale = isStarted ? originalLocalScale - Vector3.up * crouchHeightMultiplier : originalLocalScale;
+        isCrouching = isStarted;
+        crouchCoroutine = StartCoroutine(ScaleTo(targetScale, crouchTransitionDuration));
+    }
+
     private void Move()
     {
         playerVelocity.y -= gravityValue * Time.deltaTime;
@@ -119,9 +150,9 @@ public class PlayerController : MonoBehaviour
                 break;
 
             case DelayTillGroundedType.SPRINT_CROUCH:
-                if(delayMoveVectorTillGroundedCoroutine != null)
+                if(delaySprintOrCrouchTillGroundedCoroutine != null)
                 {
-                    StopCoroutine(delayMoveVectorTillGroundedCoroutine);
+                    StopCoroutine(delaySprintOrCrouchTillGroundedCoroutine);
                 }
 
                 delaySprintOrCrouchTillGroundedCoroutine = StartCoroutine(DelayTillGroundedBehaviour(callback, type));
@@ -140,7 +171,7 @@ public class PlayerController : MonoBehaviour
     {
         yield return new WaitUntil(() => _characterController.isGrounded);
         callback?.Invoke();
-        
+
         switch(type)
         {
             case DelayTillGroundedType.MOVE_VECTOR:
@@ -151,6 +182,59 @@ public class PlayerController : MonoBehaviour
                 delaySprintOrCrouchTillGroundedCoroutine = null;
                 break;
         }
+    }
+    
+    private IEnumerator ScaleTo(Vector3 targetScale, float duration)
+    {
+        // Checking for !isCrouching since that is the target state of this transition
+        if(!isCrouching)
+        {
+            // Cast a ray from the player's head upward to check for obstacles
+            RaycastHit hit;
+            yield return new WaitUntil(() =>
+            {
+                Vector3 tipOfTheHead = new Vector3(transform.position.x, _characterController.bounds.max.y, transform.position.z);
+                float rayLength = originalLocalScale.y - (originalLocalScale.y * crouchHeightMultiplier);
+                return !Physics.Raycast(tipOfTheHead, Vector3.up, out hit, rayLength, standBlockLayers);
+            });
+        }
+
+        Vector3 startScale = transform.localScale;
+        float startExtentY = _characterController.bounds.extents.y;
+        float startBottomY = _characterController.bounds.center.y - startExtentY;
+
+        if(Mathf.Approximately(duration, 0f))
+        {
+            transform.localScale = targetScale;
+            crouchCoroutine = null;
+            yield break;
+        }
+
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            // Smoothstep easing
+            float eased = t * t * (3f - 2f * t);
+
+            float feetPosY = transform.position.y;
+
+            // Interpolate scale
+            Vector3 newScale = Vector3.Lerp(startScale, targetScale, eased);
+            transform.localScale = newScale;
+
+            float feetPosYDiff = (feetPosY - transform.position.y) / 2f;
+            transform.position = transform.position + new Vector3(0f, feetPosYDiff, 0f);
+
+            yield return null;
+        }
+
+        transform.localScale = targetScale;
+
+        crouchCoroutine = null;
     }
 
     #endregion
@@ -168,7 +252,7 @@ public class PlayerController : MonoBehaviour
             DelayTillGrounded(() => this.moveVector = transform.forward * moveVector.y + transform.right * moveVector.x, DelayTillGroundedType.MOVE_VECTOR);
         }
     }
-    
+
     public void SetSprint(bool isSprinting)
     {
         if(!isSprintActive)
@@ -185,6 +269,11 @@ public class PlayerController : MonoBehaviour
         {
             DelayTillGrounded(() => this.isSprinting = isSprinting, DelayTillGroundedType.SPRINT_CROUCH);
         }
+    }
+
+    public bool GetCrouch()
+    {
+        return this.isCrouching;
     }
 
     #endregion
