@@ -220,14 +220,9 @@ public class PlayerController : MonoBehaviour
             // Smoothstep easing
             float eased = t * t * (3f - 2f * t);
 
-            float feetPosY = transform.position.y;
-
             // Interpolate scale
             Vector3 newScale = Vector3.Lerp(startScale, targetScale, eased);
             transform.localScale = newScale;
-
-            float feetPosYDiff = (feetPosY - transform.position.y) / 2f;
-            transform.position = transform.position + new Vector3(0f, feetPosYDiff, 0f);
 
             yield return null;
         }
