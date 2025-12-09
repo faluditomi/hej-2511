@@ -33,6 +33,8 @@ public class PlayerController : MonoBehaviour
 
     private Vector3 originalLocalScale;
 
+    private float originalHeight;
+
     [SerializeField]
     private float
         moveSpeed = 8f,
@@ -70,6 +72,7 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         originalLocalScale = transform.localScale;
+        originalHeight = _characterController.height;
     }
 
     private void FixedUpdate()
@@ -89,6 +92,12 @@ public class PlayerController : MonoBehaviour
         {
             if(_characterController.isGrounded && isStarted)
             {
+                // If the player was crouching, stop it
+                if(isCrouching)
+                {
+                    Crouch(false);
+                }
+                
                 playerVelocity.y = Mathf.Sqrt(maxJumpHeight * gravityValue);
             }
         }
@@ -96,6 +105,12 @@ public class PlayerController : MonoBehaviour
         {
             if(_characterController.isGrounded && isStarted)
             {
+                // If the player was crouching, stop it
+                if(isCrouching)
+                {
+                    Crouch(false);
+                }
+
                 playerVelocity.y = Mathf.Sqrt(maxJumpHeight * gravityValue);
             }
             else if(!_characterController.isGrounded && !isStarted && _characterController.velocity.y > 0f)
@@ -107,6 +122,12 @@ public class PlayerController : MonoBehaviour
 
     public void Crouch(bool isStarted)
     {
+        // Don't let the player crouch while in-air
+        if(isStarted && !_characterController.isGrounded)
+        {
+            return;
+        }
+
         // If already crouched or a crouch transition is running, cancel it and start a new one.
         if(crouchCoroutine != null)
         {
@@ -115,8 +136,9 @@ public class PlayerController : MonoBehaviour
         }
 
         Vector3 targetScale = isStarted ? originalLocalScale - Vector3.up * crouchHeightMultiplier : originalLocalScale;
+        float targetHeight = isStarted ? originalHeight * crouchHeightMultiplier : originalHeight;
         isCrouching = isStarted;
-        crouchCoroutine = StartCoroutine(ScaleTo(targetScale, crouchTransitionDuration));
+        crouchCoroutine = StartCoroutine(ScaleTo(targetScale, targetHeight, crouchTransitionDuration));
     }
 
     private void Move()
@@ -184,7 +206,7 @@ public class PlayerController : MonoBehaviour
         }
     }
     
-    private IEnumerator ScaleTo(Vector3 targetScale, float duration)
+    private IEnumerator ScaleTo(Vector3 targetScale, float targetHeight, float duration)
     {
         // Checking for !isCrouching since that is the target state of this transition
         if(!isCrouching)
@@ -200,12 +222,12 @@ public class PlayerController : MonoBehaviour
         }
 
         Vector3 startScale = transform.localScale;
-        float startExtentY = _characterController.bounds.extents.y;
-        float startBottomY = _characterController.bounds.center.y - startExtentY;
+        float startHeight = _characterController.height;
 
         if(Mathf.Approximately(duration, 0f))
         {
             transform.localScale = targetScale;
+            _characterController.height = targetHeight;
             crouchCoroutine = null;
             yield break;
         }
