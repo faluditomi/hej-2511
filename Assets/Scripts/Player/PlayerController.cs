@@ -181,7 +181,7 @@ public class PlayerController : MonoBehaviour
     //TODO instead of calling Crouch(false) when jump/dash/etc. happens, call this reset
     private void QuickResetCrouch()
     {
-        if()
+        // if()
     }
 
     private void Move()
