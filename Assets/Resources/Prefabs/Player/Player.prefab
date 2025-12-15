@@ -607,6 +607,9 @@ MonoBehaviour:
   gravityValue: 12
   crouchHeightMultiplier: 0.4
   crouchTransitionDuration: 0.2
+  dashDistance: 5
+  dashSpeed: 40
+  dashCooldownDuration: 1
   isSprintActive: 1
   isJumpActive: 1
   isJumpSimple: 0

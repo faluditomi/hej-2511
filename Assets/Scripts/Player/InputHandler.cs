@@ -34,6 +34,12 @@ public class InputHandler : MonoBehaviour
 
         _inputActions.Player.Crouch.performed += Crouch;
         _inputActions.Player.Crouch.canceled += Crouch;
+
+        _inputActions.Player.DashUniversal.performed += Dash;
+        _inputActions.Player.DashForward.performed += Dash;
+        _inputActions.Player.DashBackwards.performed += Dash;
+        _inputActions.Player.DashLeft.performed += Dash;
+        _inputActions.Player.DashRight.performed += Dash;
     }
 
     private void OnDisable()
@@ -54,6 +60,12 @@ public class InputHandler : MonoBehaviour
 
         _inputActions.Player.Crouch.performed -= Crouch;
         _inputActions.Player.Crouch.canceled -= Crouch;
+
+        _inputActions.Player.DashUniversal.performed -= Dash;
+        _inputActions.Player.DashForward.performed -= Dash;
+        _inputActions.Player.DashBackwards.performed -= Dash;
+        _inputActions.Player.DashLeft.performed -= Dash;
+        _inputActions.Player.DashRight.performed -= Dash;
     }
 
     private void Move(InputAction.CallbackContext input)
@@ -93,5 +105,14 @@ public class InputHandler : MonoBehaviour
         {
             playerController.Crouch(input.performed);
         }
+    }
+
+    private void Dash(InputAction.CallbackContext input)
+    {
+        if(input.action.name.Equals(_inputActions.Player.DashUniversal.name)) playerController.StartDash(Vector3.zero);
+        if(input.action.name.Equals(_inputActions.Player.DashForward.name)) playerController.StartDash(Vector3.forward);
+        if(input.action.name.Equals(_inputActions.Player.DashBackwards.name)) playerController.StartDash(Vector3.back);
+        if(input.action.name.Equals(_inputActions.Player.DashLeft.name)) playerController.StartDash(Vector3.left);
+        if(input.action.name.Equals(_inputActions.Player.DashRight.name)) playerController.StartDash(Vector3.right);
     }
 }

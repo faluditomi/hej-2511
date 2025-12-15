@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    //TODO clean up the fields, make editor sections, tooltips, conditional rendering
     private enum DelayTillGroundedType
     {
         MOVE_VECTOR,
@@ -14,7 +15,9 @@ public class PlayerController : MonoBehaviour
     private Coroutine
         delayMoveVectorTillGroundedCoroutine,
         delaySprintOrCrouchTillGroundedCoroutine,
-        crouchCoroutine;
+        crouchCoroutine,
+        dashCoroutine,
+        dashCooldownCoroutine;
 
     private CharacterController _characterController;
     
@@ -33,16 +36,21 @@ public class PlayerController : MonoBehaviour
 
     private Vector3 originalLocalScale;
 
-    private float originalHeight;
+    private float 
+        originalHeight,
+        currentGravity;
 
     [SerializeField]
     private float
         moveSpeed = 8f,
         sprintSpeed = 15f,
         maxJumpHeight = 6.5f,
-        gravityValue = 9.81f,
+        baseGravity = 9.81f,
         crouchHeightMultiplier = 0.4f,
-        crouchTransitionDuration = 0.2f;
+        crouchTransitionDuration = 0.2f,
+        dashDistance = 5f,
+        dashSpeed = 40f,
+        dashCooldownDuration = 1f;
 
     /// <summary>
     /// Controls whether the player has access to this mechanic.
@@ -60,7 +68,8 @@ public class PlayerController : MonoBehaviour
 
     private bool
         isSprinting,
-        isCrouching;
+        isCrouching,
+        isDashing;
 
     #region MonoBehaviour Methods
 
@@ -73,6 +82,7 @@ public class PlayerController : MonoBehaviour
     {
         originalLocalScale = transform.localScale;
         originalHeight = _characterController.height;
+        currentGravity = baseGravity;
     }
 
     private void FixedUpdate()
@@ -80,9 +90,36 @@ public class PlayerController : MonoBehaviour
         Move();
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+            Debug.Log("stopped dashing");
+        if(isDashing)
+        {
+            StopDash();
+        }
+    }
+
     #endregion
 
     #region Movement Logic
+
+    public void StartDash(Vector3 dashDir)
+    {
+        //TODO this should cancel crouching
+
+        if(!isDashing && dashCooldownCoroutine == null)
+        {
+            dashCoroutine = StartCoroutine(DashBehaviour(dashDir));
+        }
+    }
+
+    private void StopDash()
+    {
+        isDashing = false;
+        currentGravity = baseGravity;
+        dashCooldownCoroutine = StartCoroutine(CooldownTimer(dashCooldownDuration, () => dashCooldownCoroutine = null));
+        dashCoroutine = null;
+    }
 
     public void Jump(bool isStarted)
     {
@@ -98,7 +135,7 @@ public class PlayerController : MonoBehaviour
                     Crouch(false);
                 }
                 
-                playerVelocity.y = Mathf.Sqrt(maxJumpHeight * gravityValue);
+                playerVelocity.y = Mathf.Sqrt(maxJumpHeight * currentGravity);
             }
         }
         else
@@ -111,7 +148,7 @@ public class PlayerController : MonoBehaviour
                     Crouch(false);
                 }
 
-                playerVelocity.y = Mathf.Sqrt(maxJumpHeight * gravityValue);
+                playerVelocity.y = Mathf.Sqrt(maxJumpHeight * currentGravity);
             }
             else if(!_characterController.isGrounded && !isStarted && _characterController.velocity.y > 0f)
             {
@@ -141,9 +178,15 @@ public class PlayerController : MonoBehaviour
         crouchCoroutine = StartCoroutine(ScaleTo(targetScale, targetHeight, crouchTransitionDuration));
     }
 
+    //TODO instead of calling Crouch(false) when jump/dash/etc. happens, call this reset
+    private void QuickResetCrouch()
+    {
+        if()
+    }
+
     private void Move()
     {
-        playerVelocity.y -= gravityValue * Time.deltaTime;
+        playerVelocity.y -= currentGravity * Time.deltaTime;
         float currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
         Vector3 move = ((moveVector * currentSpeed) + playerVelocity) * Time.deltaTime;
         _characterController.Move(move);
@@ -188,6 +231,47 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region Coroutines
+
+    private IEnumerator DashBehaviour(Vector3 dashDir)
+    {
+        isDashing = true;
+        currentGravity = 0f;
+        
+        //TODO if the player hits something while dashing, stop dashing
+
+        if(dashDir.Equals(Vector3.zero))
+        {
+            dashDir = -transform.forward;
+        }
+        else
+        {
+            dashDir = transform.TransformDirection(dashDir);
+        }
+
+        float distanceTraveled = 0f;
+
+        while(distanceTraveled < dashDistance)
+        {
+            float step = dashSpeed * Time.deltaTime;
+            _characterController.Move(dashDir * step);
+            distanceTraveled += step;
+
+            yield return null;
+        }
+
+        StopDash();
+    }
+
+    /// <summary>
+    /// Used to keep track of user mechanic cooldowns. After 'duration', the 'onComplete' action will run.
+    /// The action should probably be something like () => dashCooldownCoroutine = null 
+    /// </summary>
+    private IEnumerator CooldownTimer(float duration, Action onComplete)
+    {
+        yield return new WaitForSeconds(duration);
+
+        onComplete?.Invoke();
+    }
 
     private IEnumerator DelayTillGroundedBehaviour(Action callback, DelayTillGroundedType type)
     {
