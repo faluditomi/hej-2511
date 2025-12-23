@@ -10,16 +10,21 @@ public class PlayerController : MonoBehaviour
     private enum DelayTillGroundedType
     {
         MOVE_VECTOR,
-        SPRINT_CROUCH
+        SPRINT_CROUCH,
     }
+
+    private Transform followTarget;
 
     private Coroutine
         delayMoveVectorTillGroundedCoroutine,
         delaySprintOrCrouchTillGroundedCoroutine,
         crouchCoroutine,
+        dashCoroutine,
         dashCooldownCoroutine;
 
     private CharacterController _characterController;
+
+    private InputHandler inputHandler;
     
     [Tooltip("Layers that block the player from standing up")]
     [SerializeField] private LayerMask standBlockLayers;
@@ -86,10 +91,13 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         _characterController = GetComponent<CharacterController>();
+        inputHandler = GetComponent<InputHandler>();
     }
 
     private void Start()
     {
+        followTarget = transform.Find("Follow Target");
+
         originalLocalScale = transform.localScale;
         originalHeight = _characterController.height;
         currentGravity = baseGravity;
@@ -101,10 +109,10 @@ public class PlayerController : MonoBehaviour
     {
         Move();
     }
-
-    private void OnCollisionEnter(Collision collision)
+        
+    void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        if(isDashing) StopDash();
+        if(isDashing) StopDash(Vector3.ProjectOnPlane(_characterController.velocity, Vector3.up));
     }
 
     #endregion
@@ -144,8 +152,6 @@ public class PlayerController : MonoBehaviour
             .Pause();
     }
 
-    //TODO dash should also set the movement vector (try dashing mid air in a direction you're not moving and see why)
-    //TODO dashing with W and S should take into account the facing of the player (use the look thing's forward)
     public void StartDash(Vector3 dashDir)
     {
         if(!CanDash()) return;
@@ -153,11 +159,24 @@ public class PlayerController : MonoBehaviour
         // If the player was crouching, stop it
         QuickResetCrouch();
 
-        StartCoroutine(DashBehaviour(dashDir));
+        dashCoroutine = StartCoroutine(DashBehaviour(dashDir));
     }
 
-    private void StopDash()
+    private void StopDash(Vector3 dashDir)
     {
+        if(dashCoroutine != null)
+        {
+            StopCoroutine(dashCoroutine);
+            dashCoroutine = null;
+        }
+
+        // Help make movement look continuous. After dashing, player starts falling in dash direction.
+        dashDir.Normalize();
+        moveVector = new Vector3(Vector3.Dot(dashDir, transform.right), Vector3.Dot(dashDir, transform.forward), 0f);
+
+        // Once the player lands, they should immediately take control of the character
+        DelayTillGrounded(() => SetMoveVector(inputHandler.GetCurrentMove()), DelayTillGroundedType.MOVE_VECTOR);
+
         isDashing = false;
         currentGravity = baseGravity;
         dashCooldownCoroutine = StartCoroutine(CooldownTimer(dashCooldownDuration, () => dashCooldownCoroutine = null));
@@ -209,40 +228,6 @@ public class PlayerController : MonoBehaviour
         crouchCoroutine = StartCoroutine(CrouchBehaviour(isStarted));
     }
 
-    private IEnumerator CrouchBehaviour(bool isStarted)
-    {
-        // Checking for when the player is standing up
-        if(!isStarted)
-        {
-            // Cast a ray from the player's head upward to check for obstacles
-            RaycastHit hit;
-            yield return new WaitUntil(() =>
-            {
-                Vector3 tipOfTheHead = new Vector3(transform.position.x, _characterController.bounds.max.y, transform.position.z);
-                float rayLength = originalLocalScale.y - (originalLocalScale.y * crouchHeightMultiplier);
-                return !Physics.Raycast(tipOfTheHead, Vector3.up, out hit, rayLength, standBlockLayers);
-            });
-        }
-
-        // If a crouch transition is running, cancel it and start a new one.
-        DOTween.Pause(_crouchTweenIdLiteral);
-
-        if(isStarted && !isCrouching)
-        {
-            crouchDownScaleTweener.Restart();
-            crouchDownHeightTweener.Restart();
-        }
-        else if(!isStarted && isCrouching)
-        {
-            crouchUpScaleTweener.Restart();
-            crouchUpHeightTweener.Restart();
-        }
-
-        yield return new WaitForSeconds(crouchTransitionDuration);
-
-        crouchCoroutine = null;
-    }
-
     private void QuickResetCrouch()
     {
         DOTween.Pause(_crouchTweenIdLiteral);
@@ -255,7 +240,8 @@ public class PlayerController : MonoBehaviour
     {
         playerVelocity.y -= currentGravity * Time.deltaTime;
         float currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
-        Vector3 move = ((moveVector * currentSpeed) + playerVelocity) * Time.deltaTime;
+        Vector3 localMoveVector = transform.forward * moveVector.y + transform.right * moveVector.x;
+        Vector3 move = ((localMoveVector * currentSpeed) + playerVelocity) * Time.deltaTime;
         _characterController.Move(move);
 
         if(_characterController.isGrounded && playerVelocity.y < 0)
@@ -295,47 +281,60 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private bool CanSprint()
-    {
-        return isSprintActive;
-    }
-
-    private bool CanJump()
-    {
-        return isJumpActive;
-    }
-
-    private bool CanDash()
-    {
-        return isDashActive && !isDashing && dashCooldownCoroutine == null;
-    }
-
-    private bool CanCrouch()
-    {
-        return isCrouchActive;
-    }
-
     #endregion
 
     #region Coroutines
+
+    private IEnumerator CrouchBehaviour(bool isStarted)
+    {
+        // Checking for when the player is standing up
+        if(!isStarted)
+        {
+            // Cast a ray from the player's head upward to check for obstacles
+            RaycastHit hit;
+            yield return new WaitUntil(() =>
+            {
+                Vector3 tipOfTheHead = new Vector3(transform.position.x, _characterController.bounds.max.y, transform.position.z);
+                float rayLength = originalLocalScale.y - (originalLocalScale.y * crouchHeightMultiplier);
+                return !Physics.Raycast(tipOfTheHead, Vector3.up, out hit, rayLength, standBlockLayers);
+            });
+        }
+
+        // If a crouch transition is running, cancel it and start a new one.
+        DOTween.Pause(_crouchTweenIdLiteral);
+
+        if(isStarted && !isCrouching)
+        {
+            crouchDownScaleTweener.Restart();
+            crouchDownHeightTweener.Restart();
+        }
+        else if(!isStarted && isCrouching)
+        {
+            crouchUpScaleTweener.Restart();
+            crouchUpHeightTweener.Restart();
+        }
+
+        yield return new WaitForSeconds(crouchTransitionDuration);
+
+        crouchCoroutine = null;
+    }
 
     private IEnumerator DashBehaviour(Vector3 dashDir)
     {
         isDashing = true;
         currentGravity = 0f;
-        
-        //TODO if the player hits something while dashing, stop dashing
 
         if(dashDir.Equals(Vector3.zero))
         {
-            dashDir = -transform.forward;
+            dashDir = -followTarget.forward;
         }
         else
         {
-            dashDir = transform.TransformDirection(dashDir);
+            dashDir = followTarget.TransformDirection(dashDir);
         }
 
         float distanceTraveled = 0f;
+        moveVector = Vector3.zero;
 
         while(distanceTraveled < dashDistance)
         {
@@ -346,7 +345,8 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
 
-        StopDash();
+        // If in the future we want the player to start losing altitude right after dashing, just project dashDir onto the Vector3.up plane
+        StopDash(dashDir);
     }
 
     /// <summary>
@@ -381,15 +381,35 @@ public class PlayerController : MonoBehaviour
 
     #region Setters & Getters
 
+    private bool CanSprint()
+    {
+        return isSprintActive;
+    }
+
+    private bool CanJump()
+    {
+        return isJumpActive;
+    }
+
+    private bool CanDash()
+    {
+        return isDashActive && !isDashing && dashCooldownCoroutine == null;
+    }
+
+    private bool CanCrouch()
+    {
+        return isCrouchActive;
+    }
+
     public void SetMoveVector(Vector2 moveVector)
     {
         if(_characterController.isGrounded)
         {
-            this.moveVector = transform.forward * moveVector.y + transform.right * moveVector.x;
+            this.moveVector = moveVector;
         }
         else
         {
-            DelayTillGrounded(() => this.moveVector = transform.forward * moveVector.y + transform.right * moveVector.x, DelayTillGroundedType.MOVE_VECTOR);
+            DelayTillGrounded(() => this.moveVector = moveVector, DelayTillGroundedType.MOVE_VECTOR);
         }
     }
 

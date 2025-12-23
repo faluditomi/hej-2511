@@ -74,6 +74,11 @@ public class InputHandler : MonoBehaviour
         playerController.SetMoveVector(moveVector);
     }
 
+    public Vector2 GetCurrentMove()
+    {
+        return _inputActions.Player.Move.ReadValue<Vector2>();
+    }
+
     private void Look(InputAction.CallbackContext input)
     {
         Vector2 lookVector = input.ReadValue<Vector2>();
