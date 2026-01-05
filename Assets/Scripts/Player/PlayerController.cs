@@ -1,12 +1,10 @@
 using System;
 using System.Collections;
 using DG.Tweening;
-using UnityEditor.Splines;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    //TODO clean up the fields, make editor sections, tooltips, conditional rendering
     private enum DelayTillGroundedType
     {
         MOVE_VECTOR,
@@ -35,8 +33,10 @@ public class PlayerController : MonoBehaviour
         crouchUpHeightTweener;
 
     private Vector3
-        moveVector = Vector3.zero, /// The inputs from the player
-        playerVelocity = Vector3.zero, /// Used for applying velocity on the y axis (e.g.: jump, gravity)
+        /// The inputs from the player
+        moveVector = Vector3.zero,
+        /// Used for applying velocity on the y axis (e.g.: jump, gravity)
+        playerVelocity = Vector3.zero,
         originalLocalScale;
 
     private float 
