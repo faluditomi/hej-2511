@@ -26,7 +26,6 @@ public class PlayerController : MonoBehaviour
 
     private InputHandler inputHandler;
     
-    [Tooltip("Layers that block the player from standing up")]
     [SerializeField] private LayerMask standBlockLayers;
 
     private Tweener
@@ -35,24 +34,16 @@ public class PlayerController : MonoBehaviour
         crouchUpScaleTweener,
         crouchUpHeightTweener;
 
-    /// <summary>
-    /// The inputs from the player
-    /// </summary>
-    private Vector3 moveVector = Vector3.zero;
-
-    /// <summary>
-    /// Used for applying velocity on the y axis (e.g.: jump, gravity)
-    /// </summary>
-    private Vector3 playerVelocity = Vector3.zero;
-
-    private Vector3 originalLocalScale;
+    private Vector3
+        moveVector = Vector3.zero, /// The inputs from the player
+        playerVelocity = Vector3.zero, /// Used for applying velocity on the y axis (e.g.: jump, gravity)
+        originalLocalScale;
 
     private float 
         originalHeight,
         currentGravity;
 
-    [SerializeField]
-    private float
+    [SerializeField] private float
         moveSpeed = 8f,
         sprintSpeed = 15f,
         maxJumpHeight = 6.5f,
@@ -65,21 +56,18 @@ public class PlayerController : MonoBehaviour
 
     private string _crouchTweenIdLiteral = "crouch";
 
-    /// <summary>
-    /// Controls whether the player has access to this mechanic.
-    /// </summary>
-    [SerializeField]
-    private bool
+    [SerializeField] private bool
+        /// Controls whether the player has access to this mechanic.
         isSprintActive = true,
+        /// Controls whether the player has access to this mechanic.
         isJumpActive = true,
+        /// Controls whether the player has access to this mechanic.
         isDashActive = true,
-        isCrouchActive = true;
-
-    /// <summary>
-    /// Simple jump = [Press once, jump of a maxJumpHeight.] Non-simple jump = [Pressing activates jump, 
-    /// letting go stops the player from elevating. If the player doesn't let go, the jump goes to maxJumpHeight.]
-    /// </summary>
-    [SerializeField] private bool isJumpSimple = true;
+        /// Controls whether the player has access to this mechanic.
+        isCrouchActive = true,
+        /// Simple jump = [Press once, jump of a maxJumpHeight.] Non-simple jump = [Pressing activates jump, 
+        /// letting go stops the player from elevating. If the player doesn't let go, the jump goes to maxJumpHeight.]
+        isJumpSimple = true;
 
     private bool
         isSprinting,

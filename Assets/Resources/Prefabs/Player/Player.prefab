@@ -402,13 +402,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1229117703668961233}
-  - component: {fileID: 3514215433466790496}
-  - component: {fileID: 3148439937127299153}
-  - component: {fileID: 720423849556336177}
-  - component: {fileID: 638647930523858787}
-  - component: {fileID: 1567665299289188353}
-  - component: {fileID: 4977242973750615411}
   - component: {fileID: 3302149436307321969}
+  - component: {fileID: 4977242973750615411}
+  - component: {fileID: 638647930523858787}
+  - component: {fileID: 720423849556336177}
+  - component: {fileID: 1567665299289188353}
+  - component: {fileID: 3148439937127299153}
+  - component: {fileID: 3514215433466790496}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -435,14 +435,108 @@ Transform:
   - {fileID: 3036684734916795742}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 206.66, z: 0}
---- !u!33 &3514215433466790496
-MeshFilter:
+--- !u!114 &3302149436307321969
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7640664034499159468}
-  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac8ac9e3468f85a40bca59790e848d0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  standBlockLayers:
+    serializedVersion: 2
+    m_Bits: 64
+  moveSpeed: 8
+  sprintSpeed: 15
+  maxJumpHeight: 6.5
+  baseGravity: 9.81
+  crouchHeightMultiplier: 0.4
+  crouchTransitionDuration: 0.2
+  dashDistance: 5
+  dashSpeed: 40
+  dashCooldownDuration: 1
+  isSprintActive: 1
+  isJumpActive: 1
+  isDashActive: 1
+  isCrouchActive: 1
+  isJumpSimple: 0
+--- !u!114 &4977242973750615411
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7640664034499159468}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 865d47a9690672e439e59a6d6e8fd38a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraController
+  lookSensitivity: 10
+--- !u!143 &638647930523858787
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7640664034499159468}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!136 &720423849556336177
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7640664034499159468}
+  m_Material: {fileID: 13400000, guid: 51af8c8891b37db428a5f23e7890cb3d, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.68
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1567665299289188353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7640664034499159468}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9527f8c347ff2844f8a7254b61b18ca0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Inputhandler
 --- !u!23 &3148439937127299153
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -491,105 +585,11 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &720423849556336177
-CapsuleCollider:
+--- !u!33 &3514215433466790496
+MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7640664034499159468}
-  m_Material: {fileID: 13400000, guid: 51af8c8891b37db428a5f23e7890cb3d, type: 2}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.68
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!143 &638647930523858787
-CharacterController:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7640664034499159468}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Height: 2
-  m_Radius: 0.5
-  m_SlopeLimit: 45
-  m_StepOffset: 0.3
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1567665299289188353
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7640664034499159468}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9527f8c347ff2844f8a7254b61b18ca0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Inputhandler
---- !u!114 &4977242973750615411
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7640664034499159468}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 865d47a9690672e439e59a6d6e8fd38a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraController
-  lookSensitivity: 10
---- !u!114 &3302149436307321969
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7640664034499159468}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac8ac9e3468f85a40bca59790e848d0b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  standBlockLayers:
-    serializedVersion: 2
-    m_Bits: 64
-  moveSpeed: 8
-  sprintSpeed: 15
-  maxJumpHeight: 6.5
-  baseGravity: 9.81
-  crouchHeightMultiplier: 0.4
-  crouchTransitionDuration: 0.2
-  dashDistance: 5
-  dashSpeed: 40
-  dashCooldownDuration: 1
-  isSprintActive: 1
-  isJumpActive: 1
-  isDashActive: 1
-  isCrouchActive: 1
-  isJumpSimple: 0
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}

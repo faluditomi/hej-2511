@@ -1,0 +1,30 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <ui:Label text="General Player Variables" style="width: 128px; padding-top: 14px; align-items: stretch; align-self: center; height: 32px; align-content: center; justify-content: center; -unity-text-align: upper-center;" />
+    <ui:Slider label="Gravity" value="42" high-value="30" binding-path="baseGravity" show-input-field="true" />
+    <ui:Slider label="Base Speed" value="42" high-value="30" binding-path="moveSpeed" show-input-field="true" />
+    <uie:PropertyField binding-path="standBlockLayers" tooltip="Layers that block the player from standing up" />
+    <ui:Label text="Mechanic Switches" tooltip="These switches can be used to give, or take away acccess, from the player to certain mechanics." name="Label" style="width: 128px; padding-top: 4px; align-items: stretch; align-self: center; height: 32px; align-content: center; justify-content: center; -unity-text-align: upper-center;" />
+    <ui:Toggle label="Sprint Active" tooltip="Whether the player can sprint" binding-path="isSprintActive" class="unity-base-field__aligned" />
+    <ui:Toggle label="Jump Active" tooltip="Whether the player can jump" binding-path="isJumpActive" class="unity-base-field__aligned" />
+    <ui:Toggle label="Crouch Active" tooltip="Whether the player can crouch" binding-path="isCrouchActive" class="unity-base-field__aligned" />
+    <ui:Toggle label="Dash Active" tooltip="Whether the player can dash" binding-path="isDashActive" class="unity-base-field__aligned" />
+    <ui:Label text="Mechanic Specific Variables" style="width: 128px; padding-top: 14px; align-items: stretch; align-self: center; height: 32px; align-content: center; justify-content: center; -unity-text-align: upper-center;" />
+    <ui:TabView name="MechanicTabs">
+        <ui:Tab label="Sprint" name="SprintTab">
+            <ui:Slider label="Speed" value="50" high-value="50" binding-path="sprintSpeed" show-input-field="true" />
+        </ui:Tab>
+        <ui:Tab label="Jump" name="JumpTab">
+            <ui:Slider label="Max Height" value="40" high-value="40" binding-path="maxJumpHeight" show-input-field="true" name="Slider" />
+            <uie:PropertyField binding-path="isJumpSimple" tooltip="Simple jump = [Press once, jump of a maxJumpHeight.] Non-simple jump = [Pressing activates jump, letting go stops the player from elevating. If the player doesn&apos;t let go, the jump goes to maxJumpHeight.]" />
+        </ui:Tab>
+        <ui:Tab label="Crouch" name="CrouchTab">
+            <ui:Slider label="Height Multiplier" value="42" high-value="1" binding-path="crouchHeightMultiplier" show-input-field="true" name="Slider" tooltip="How tall the player character&apos;s confines will be while crouched compared to the their normal height." />
+            <ui:Slider label="Transition Duration" value="42" high-value="1" binding-path="crouchTransitionDuration" show-input-field="true" name="Slider" tooltip="How long it takes for the player character to go from standing to crouching and vice versa." />
+        </ui:Tab>
+        <ui:Tab label="Dash" name="DashTab">
+            <ui:Slider label="Speed" value="42" high-value="120" binding-path="dashSpeed" show-input-field="true" tooltip="How fast the player moves while dashing." />
+            <ui:Slider label="Distance" value="42" high-value="20" binding-path="dashDistance" show-input-field="true" tooltip="How far the player travels with one dash." />
+            <ui:Slider label="Cooldown Duration" value="42" high-value="10" binding-path="dashCooldownDuration" show-input-field="true" />
+        </ui:Tab>
+    </ui:TabView>
+</ui:UXML>
